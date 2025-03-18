@@ -215,15 +215,6 @@ public class LockScreenService extends Service {
                              Intent.FLAG_ACTIVITY_SINGLE_TOP |
                              Intent.FLAG_ACTIVITY_CLEAR_TOP);
             
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && keyguardManager.isKeyguardLocked()) {
-                // 키가드가 잠겨있는 경우 처리
-                if (!keyguardManager.isDeviceSecure()) {
-                    // 서비스에서는 직접 키가드를 해제할 수 없음
-                    // LockScreenActivity에서 직접 처리할 것
-                    Log.d(TAG, "보안이 없는 기기입니다. LockScreenActivity에서 키가드를 해제합니다.");
-                }
-            }
-            
             // 활동 시작
             startActivity(lockIntent);
             Log.d(TAG, "잠금화면 액티비티 시작됨");

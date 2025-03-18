@@ -39,49 +39,24 @@ public class LockScreenActivity extends AppCompatActivity {
             
             // Android 10 이상에서는 키가드를 직접 비활성화 가능
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // 실제 구현에서는 사용자가 비활성화하도록 안내하는 것이 좋음
-                // setKeyguardLocked(false);
+                // 키가드 비활성화하지 않음 - 기본 잠금화면이 나오도록 설정
+                // setKeyguardLocked(false); 호출하지 않음
             }
         } else {
             // 과거 버전 호환성을 위한 코드
             getWindow().addFlags(
                     WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                     WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
-                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
-                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                    // FLAG_DISMISS_KEYGUARD 플래그 제거 - 시스템 키가드를 유지
             );
         }
 
         // KeyguardManager 초기화
         keyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
         
-        // API 26 이상에서 키가드 비활성화
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (!keyguardManager.isDeviceSecure()) {
-                // 보안이 없는 경우 키가드 해제 요청
-                keyguardManager.requestDismissKeyguard(this, new KeyguardManager.KeyguardDismissCallback() {
-                    @Override
-                    public void onDismissError() {
-                        super.onDismissError();
-                        Log.e(TAG, "키가드 해제 실패");
-                    }
-                    
-                    @Override
-                    public void onDismissSucceeded() {
-                        super.onDismissSucceeded();
-                        Log.d(TAG, "키가드 해제 성공");
-                    }
-                    
-                    @Override
-                    public void onDismissCancelled() {
-                        super.onDismissCancelled();
-                        Log.d(TAG, "키가드 해제 취소됨");
-                    }
-                });
-            } else {
-                Log.d(TAG, "보안이 설정된 기기입니다. 사용자 인증 필요");
-            }
-        }
+        // API 26 이상에서 키가드 비활성화하는 코드 제거
+        // 기본 잠금화면이 표시되도록 하기 위해 키가드를 해제하지 않음
 
         // 전체화면으로 표시
         getWindow().getDecorView().setSystemUiVisibility(
@@ -156,7 +131,13 @@ public class LockScreenActivity extends AppCompatActivity {
         hintTextView.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
-        hintTextView.setText("오른쪽으로 스와이프하여 잠금화면 넘기기");
+        
+        // 기본 잠금화면 사용 안내 메시지 추가
+        String hint = keyguardManager.isKeyguardSecure() ?
+                "스와이프하여 시스템 잠금화면으로 이동" :
+                "스와이프하여 잠금화면 해제";
+        
+        hintTextView.setText(hint);
         hintTextView.setTextColor(textColor);
         hintTextView.setTextSize(14);
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) hintTextView.getLayoutParams();
@@ -174,6 +155,24 @@ public class LockScreenActivity extends AppCompatActivity {
                 // 오른쪽으로 스와이프하면 액티비티 종료
                 finish();
             }
+            
+            @Override
+            public void onSwipeLeft() {
+                // 왼쪽으로 스와이프해도 액티비티 종료
+                finish();
+            }
+            
+            @Override
+            public void onSwipeUp() {
+                // 위로 스와이프해도 액티비티 종료
+                finish();
+            }
+            
+            @Override
+            public void onSwipeDown() {
+                // 아래로 스와이프해도 액티비티 종료
+                finish();
+            }
         });
         
         return rootLayout;
@@ -188,10 +187,7 @@ public class LockScreenActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // 화면이 포그라운드로 돌아오면 키가드를 다시 비활성화
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            keyguardManager.requestDismissKeyguard(this, null);
-        }
+        // 키가드 해제 코드 제거 - 시스템 잠금화면이 나오도록 설정
     }
 
     @Override
