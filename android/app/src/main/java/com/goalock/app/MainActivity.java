@@ -1,6 +1,9 @@
 package com.goalock.app;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,16 +20,20 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugins.GeneratedPluginRegistrant;
 
 public class MainActivity extends FlutterActivity {
     private static final String TAG = "MainActivity";
     private static final String CHANNEL = "com.goalock.app/lockscreen";
-    private static final int OVERLAY_PERMISSION_REQUEST_CODE = 1234;
-
-    private MethodChannel methodChannel;
-    private boolean pendingMethodCall = false;
-    private MethodCall lastMethodCall;
-    private Result lastMethodResult;
+    private static final String PREFS_NAME = "GoalockPrefs";
+    private static final String KEY_SERVICE_ENABLED = "lockScreenServiceEnabled";
+    private static final String KEY_GOAL_TEXT = "goalText";
+    private static final String KEY_BACKGROUND_COLOR = "backgroundColor";
+    private static final String KEY_TEXT_COLOR = "textColor";
+    
+    private static final int REQUEST_CODE_OVERLAY_PERMISSION = 100;
+    private MethodChannel.Result pendingResult;
+    private String pendingMethodCall;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -35,168 +42,196 @@ public class MainActivity extends FlutterActivity {
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
-        super.configureFlutterEngine(flutterEngine);
-
-        methodChannel = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL);
-        methodChannel.setMethodCallHandler(new MethodCallHandler() {
-            @Override
-            public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-                switch (call.method) {
-                    case "requestPermissions":
-                        handleRequestPermissions(result);
-                        break;
-                    case "enableLockScreenService":
-                        handleEnableLockScreenService(call, result);
-                        break;
-                    case "disableLockScreenService":
-                        handleDisableLockScreenService(result);
-                        break;
-                    case "updateGoalText":
-                        handleUpdateGoalText(call, result);
-                        break;
-                    default:
-                        result.notImplemented();
-                        break;
+        GeneratedPluginRegistrant.registerWith(flutterEngine);
+        
+        // Method Channel 설정
+        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
+            .setMethodCallHandler(
+                (call, result) -> {
+                    switch (call.method) {
+                        case "startLockScreenService":
+                            startLockScreenService(result);
+                            break;
+                        case "stopLockScreenService":
+                            stopLockScreenService(result);
+                            break;
+                        case "isLockScreenServiceEnabled":
+                            checkServiceStatus(result);
+                            break;
+                        case "setGoalText":
+                            String text = call.argument("text");
+                            setGoalText(text, result);
+                            break;
+                        case "setBackgroundColor":
+                            String bgColor = call.argument("color");
+                            setBackgroundColor(bgColor, result);
+                            break;
+                        case "setTextColor":
+                            String textColor = call.argument("color");
+                            setTextColor(textColor, result);
+                            break;
+                        case "checkPermissions":
+                            checkPermissions(result);
+                            break;
+                        case "requestPermissions":
+                            pendingResult = result;
+                            pendingMethodCall = "requestPermissions";
+                            requestOverlayPermission();
+                            break;
+                        default:
+                            result.notImplemented();
+                            break;
+                    }
+                }
+            );
+    }
+    
+    // 잠금화면 서비스 시작
+    private void startLockScreenService(MethodChannel.Result result) {
+        if (!Settings.canDrawOverlays(this)) {
+            pendingResult = result;
+            pendingMethodCall = "startLockScreenService";
+            requestOverlayPermission();
+            return;
+        }
+        
+        if (isServiceRunning(LockScreenService.class)) {
+            Log.d(TAG, "서비스가 이미 실행 중입니다.");
+            result.success(true);
+            return;
+        }
+        
+        // 설정 저장
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        prefs.edit().putBoolean(KEY_SERVICE_ENABLED, true).apply();
+        
+        // 서비스 시작
+        Intent intent = new Intent(this, LockScreenService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
+        
+        Log.d(TAG, "잠금화면 서비스를 시작했습니다.");
+        result.success(true);
+    }
+    
+    // 잠금화면 서비스 중지
+    private void stopLockScreenService(MethodChannel.Result result) {
+        // 설정 저장
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        prefs.edit().putBoolean(KEY_SERVICE_ENABLED, false).apply();
+        
+        // 서비스 중지
+        Intent intent = new Intent(this, LockScreenService.class);
+        stopService(intent);
+        
+        Log.d(TAG, "잠금화면 서비스를 중지했습니다.");
+        result.success(true);
+    }
+    
+    // 서비스 상태 확인
+    private void checkServiceStatus(MethodChannel.Result result) {
+        boolean isRunning = isServiceRunning(LockScreenService.class);
+        Log.d(TAG, "서비스 실행 상태: " + isRunning);
+        result.success(isRunning);
+    }
+    
+    // 목표 텍스트 설정
+    private void setGoalText(String text, MethodChannel.Result result) {
+        if (text == null) {
+            result.error("INVALID_ARGUMENT", "텍스트가 null입니다", null);
+            return;
+        }
+        
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        prefs.edit().putString(KEY_GOAL_TEXT, text).apply();
+        
+        Log.d(TAG, "목표 텍스트 설정: " + text);
+        result.success(true);
+    }
+    
+    // 배경색 설정
+    private void setBackgroundColor(String hexColor, MethodChannel.Result result) {
+        if (hexColor == null) {
+            result.error("INVALID_ARGUMENT", "색상이 null입니다", null);
+            return;
+        }
+        
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        prefs.edit().putString(KEY_BACKGROUND_COLOR, hexColor).apply();
+        
+        Log.d(TAG, "배경색 설정: " + hexColor);
+        result.success(true);
+    }
+    
+    // 텍스트 색상 설정
+    private void setTextColor(String hexColor, MethodChannel.Result result) {
+        if (hexColor == null) {
+            result.error("INVALID_ARGUMENT", "색상이 null입니다", null);
+            return;
+        }
+        
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        prefs.edit().putString(KEY_TEXT_COLOR, hexColor).apply();
+        
+        Log.d(TAG, "텍스트 색상 설정: " + hexColor);
+        result.success(true);
+    }
+    
+    // 권한 확인
+    private void checkPermissions(MethodChannel.Result result) {
+        boolean hasOverlayPermission = Settings.canDrawOverlays(this);
+        Log.d(TAG, "오버레이 권한 상태: " + hasOverlayPermission);
+        result.success(hasOverlayPermission);
+    }
+    
+    // 오버레이 권한 요청
+    private void requestOverlayPermission() {
+        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + getPackageName()));
+        startActivityForResult(intent, REQUEST_CODE_OVERLAY_PERMISSION);
+    }
+    
+    // 서비스 실행 상태 확인
+    private boolean isServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        if (manager != null) {
+            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+                if (serviceClass.getName().equals(service.service.getClassName())) {
+                    return true;
                 }
             }
-        });
-    }
-
-    private void handleRequestPermissions(Result result) {
-        // Android 6.0 (API 23) 이상에서는 오버레이 권한이 필요
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                pendingMethodCall = true;
-                lastMethodCall = new MethodCall("requestPermissions", null);
-                lastMethodResult = result;
-
-                Intent intent = new Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + getPackageName())
-                );
-                startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE);
-            } else {
-                result.success(true);
-            }
-        } else {
-            // API 23 미만에서는 권한이 필요 없음
-            result.success(true);
         }
+        return false;
     }
-
-    private void handleEnableLockScreenService(MethodCall call, Result result) {
-        // 오버레이 권한 확인
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                pendingMethodCall = true;
-                lastMethodCall = call;
-                lastMethodResult = result;
-
-                Intent intent = new Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + getPackageName())
-                );
-                startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE);
-                return;
-            }
-        }
-
-        try {
-            // 서비스 시작
-            String goalText = call.argument("goalText");
-            Long backgroundColor = call.argument("backgroundColor");
-            Long textColor = call.argument("textColor");
-
-            Intent serviceIntent = new Intent(this, LockScreenService.class);
-            
-            if (goalText != null) {
-                serviceIntent.setAction("UPDATE_GOAL");
-                serviceIntent.putExtra("goalText", goalText);
-            }
-            
-            if (backgroundColor != null && textColor != null) {
-                serviceIntent.setAction("UPDATE_COLORS");
-                serviceIntent.putExtra("backgroundColor", backgroundColor.intValue());
-                serviceIntent.putExtra("textColor", textColor.intValue());
-            }
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent);
-            } else {
-                startService(serviceIntent);
-            }
-            
-            Log.d(TAG, "잠금화면 서비스가 시작되었습니다.");
-            result.success(true);
-        } catch (Exception e) {
-            Log.e(TAG, "잠금화면 서비스 시작 실패: " + e.getMessage());
-            result.error("SERVICE_START_ERROR", "잠금화면 서비스를 시작할 수 없습니다.", e.getMessage());
-        }
-    }
-
-    private void handleDisableLockScreenService(Result result) {
-        try {
-            // 서비스 종료
-            Intent serviceIntent = new Intent(this, LockScreenService.class);
-            stopService(serviceIntent);
-            
-            Log.d(TAG, "잠금화면 서비스가 중지되었습니다.");
-            result.success(true);
-        } catch (Exception e) {
-            Log.e(TAG, "잠금화면 서비스 중지 실패: " + e.getMessage());
-            result.error("SERVICE_STOP_ERROR", "잠금화면 서비스를 중지할 수 없습니다.", e.getMessage());
-        }
-    }
-
-    private void handleUpdateGoalText(MethodCall call, Result result) {
-        try {
-            String goalText = call.argument("goalText");
-            
-            if (goalText == null) {
-                result.error("INVALID_ARGUMENT", "목표 텍스트가 null입니다.", null);
-                return;
-            }
-            
-            Intent serviceIntent = new Intent(this, LockScreenService.class);
-            serviceIntent.setAction("UPDATE_GOAL");
-            serviceIntent.putExtra("goalText", goalText);
-            
-            startService(serviceIntent);
-            
-            Log.d(TAG, "목표 텍스트가 업데이트 되었습니다: " + goalText);
-            result.success(true);
-        } catch (Exception e) {
-            Log.e(TAG, "목표 텍스트 업데이트 실패: " + e.getMessage());
-            result.error("UPDATE_GOAL_ERROR", "목표 텍스트를 업데이트할 수 없습니다.", e.getMessage());
-        }
-    }
-
+    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        
-        if (requestCode == OVERLAY_PERMISSION_REQUEST_CODE) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (Settings.canDrawOverlays(this)) {
-                    if (pendingMethodCall && lastMethodCall != null && lastMethodResult != null) {
-                        if ("requestPermissions".equals(lastMethodCall.method)) {
-                            lastMethodResult.success(true);
-                        } else if ("enableLockScreenService".equals(lastMethodCall.method)) {
-                            handleEnableLockScreenService(lastMethodCall, lastMethodResult);
-                        }
-                        
-                        pendingMethodCall = false;
-                        lastMethodCall = null;
-                        lastMethodResult = null;
+        if (requestCode == REQUEST_CODE_OVERLAY_PERMISSION) {
+            if (Settings.canDrawOverlays(this)) {
+                Log.d(TAG, "오버레이 권한 획득 성공");
+                
+                if (pendingResult != null) {
+                    if ("requestPermissions".equals(pendingMethodCall)) {
+                        pendingResult.success(true);
+                    } else if ("startLockScreenService".equals(pendingMethodCall)) {
+                        startLockScreenService(pendingResult);
                     }
-                } else {
-                    Toast.makeText(this, "오버레이 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
-                    if (lastMethodResult != null) {
-                        lastMethodResult.error("PERMISSION_DENIED", "오버레이 권한이 거부되었습니다.", null);
-                        lastMethodResult = null;
-                    }
+                    pendingResult = null;
+                    pendingMethodCall = null;
+                }
+            } else {
+                Log.d(TAG, "오버레이 권한 획득 실패");
+                if (pendingResult != null) {
+                    pendingResult.success(false);
+                    pendingResult = null;
+                    pendingMethodCall = null;
                 }
             }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 } 

@@ -2,15 +2,13 @@ package com.goalock.app;
 
 import android.content.Context;
 import android.view.GestureDetector;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 
 /**
  * 스와이프 제스처 감지를 위한 터치 리스너
  */
-public class OnSwipeTouchListener implements OnTouchListener {
+public class OnSwipeTouchListener implements View.OnTouchListener {
 
     private final GestureDetector gestureDetector;
 
@@ -23,7 +21,7 @@ public class OnSwipeTouchListener implements OnTouchListener {
         return gestureDetector.onTouchEvent(event);
     }
 
-    private final class GestureListener extends SimpleOnGestureListener {
+    private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
         private static final int SWIPE_THRESHOLD = 100;
         private static final int SWIPE_VELOCITY_THRESHOLD = 100;
 
@@ -34,9 +32,8 @@ public class OnSwipeTouchListener implements OnTouchListener {
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            boolean result = false;
             try {
-                if (e1 == null || e2 == null) return false;
-                
                 float diffY = e2.getY() - e1.getY();
                 float diffX = e2.getX() - e1.getX();
                 
@@ -47,7 +44,7 @@ public class OnSwipeTouchListener implements OnTouchListener {
                         } else {
                             onSwipeLeft();
                         }
-                        return true;
+                        result = true;
                     }
                 } else {
                     if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
@@ -56,13 +53,13 @@ public class OnSwipeTouchListener implements OnTouchListener {
                         } else {
                             onSwipeUp();
                         }
-                        return true;
+                        result = true;
                     }
                 }
             } catch (Exception exception) {
                 exception.printStackTrace();
             }
-            return false;
+            return result;
         }
     }
 

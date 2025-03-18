@@ -12,16 +12,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
@@ -33,26 +27,26 @@ public class LockScreenService extends Service {
     private static final String KEY_GOAL_TEXT = "goalText";
     private static final String KEY_BG_COLOR = "backgroundColor";
     private static final String KEY_TEXT_COLOR = "textColor";
+    private static final String KEY_SERVICE_ENABLED = "lockScreenServiceEnabled";
     
     // Notification ID & Channel ID
     private static final int NOTIFICATION_ID = 1001;
     private static final String CHANNEL_ID = "goalock_channel";
 
-    private WindowManager windowManager;
-    private View lockScreenView;
-    private TextView goalTextView;
-    private LinearLayout goalLockLayout;
+    private KeyguardManager keyguardManager;
+    private PowerManager powerManager;
+    private PowerManager.WakeLock wakeLock;
+    private boolean isServiceRunning = false;
     private String goalText = "";
     private int backgroundColor = Color.GREEN;
     private int textColor = Color.WHITE;
-    private KeyguardManager keyguardManager;
 
     private final BroadcastReceiver screenOffReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
-                Log.d(TAG, "화면이 꺼졌습니다. 잠금화면을 준비합니다.");
-                hideLockScreen(); // 화면이 꺼지면 우선 잠금화면을 제거합니다
+                Log.d(TAG, "화면이 꺼졌습니다. 다음 화면 켜짐을 준비합니다.");
+                // 화면이 꺼지면 특별한 처리 없음, 다음 켜짐 이벤트를 기다림
             }
         }
     };
@@ -61,9 +55,8 @@ public class LockScreenService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
-                Log.d(TAG, "화면이 켜졌습니다. 잠금화면을 표시합니다.");
-                // 화면이 켜지자마자 즉시 잠금화면을 표시합니다
-                showLockScreen();
+                Log.d(TAG, "화면이 켜졌습니다. 잠금화면 액티비티를 시작합니다.");
+                showLockScreenActivity();
             }
         }
     };
@@ -75,7 +68,6 @@ public class LockScreenService extends Service {
             if (Intent.ACTION_USER_PRESENT.equals(intent.getAction())) {
                 // 사용자가 기본 잠금화면을 해제했을 때 호출됩니다
                 Log.d(TAG, "사용자가 기본 잠금화면을 해제했습니다.");
-                hideLockScreen(); // 커스텀 잠금화면도 숨깁니다
             }
         }
     };
@@ -91,11 +83,22 @@ public class LockScreenService extends Service {
             startForeground(NOTIFICATION_ID, createNotification());
         }
         
-        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         keyguardManager = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        
+        // 화면 깨우기 위한 WakeLock 설정
+        wakeLock = powerManager.newWakeLock(
+                PowerManager.FULL_WAKE_LOCK | 
+                PowerManager.ACQUIRE_CAUSES_WAKEUP | 
+                PowerManager.ON_AFTER_RELEASE, 
+                "goalock:wakelock"
+        );
         
         // 설정 로드
         loadSettings();
+        
+        // 서비스 활성화 상태 저장
+        saveServiceState(true);
         
         // 화면 상태 변화 감지를 위한 브로드캐스트 리시버 등록
         IntentFilter screenOffFilter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
@@ -107,6 +110,15 @@ public class LockScreenService extends Service {
         // 키가드 상태 변경 수신기 등록
         IntentFilter keyguardFilter = new IntentFilter(Intent.ACTION_USER_PRESENT);
         registerReceiver(keyguardReceiver, keyguardFilter);
+        
+        isServiceRunning = true;
+    }
+    
+    private void saveServiceState(boolean enabled) {
+        SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
+        editor.putBoolean(KEY_SERVICE_ENABLED, enabled);
+        editor.apply();
+        Log.d(TAG, "서비스 상태 저장: " + enabled);
     }
     
     // 알림 채널 생성 (Android 8.0 이상 필수)
@@ -165,108 +177,67 @@ public class LockScreenService extends Service {
     private void loadSettings() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         goalText = prefs.getString(KEY_GOAL_TEXT, "목표를 설정해주세요");
-        backgroundColor = prefs.getInt(KEY_BG_COLOR, Color.GREEN);
-        textColor = prefs.getInt(KEY_TEXT_COLOR, Color.WHITE);
-        Log.d(TAG, "설정 로드: goalText=" + goalText);
-    }
-
-    private void showLockScreen() {
-        if (lockScreenView != null) {
-            return; // 이미 보여지고 있다면 무시
-        }
-
+        
         try {
-            // 레이아웃 인플레이트 - 동적으로 생성
-            lockScreenView = createLockScreenView();
-            
-            // 윈도우 매니저 파라미터 설정 - 최상위 우선순위로 설정
-            WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    // 최상위 오버레이 타입 사용
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                    // 기본 잠금화면 위에 표시하는 플래그 설정
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN |
-                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
-                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
-                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                    PixelFormat.TRANSLUCENT
-            );
-            
-            params.gravity = Gravity.CENTER;
-            
-            // 잠금화면 표시
-            windowManager.addView(lockScreenView, params);
-            Log.d(TAG, "잠금화면 표시됨");
-        } catch (Exception e) {
-            Log.e(TAG, "잠금화면 표시 실패: " + e.getMessage());
-        }
-    }
-    
-    // 동적으로 잠금화면 뷰 생성
-    private View createLockScreenView() {
-        // 루트 레이아웃 생성
-        LinearLayout rootLayout = new LinearLayout(this);
-        rootLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT));
-        rootLayout.setOrientation(LinearLayout.VERTICAL);
-        rootLayout.setGravity(Gravity.CENTER);
-        rootLayout.setBackgroundColor(backgroundColor);
-        rootLayout.setId(View.generateViewId());
-        goalLockLayout = rootLayout;
-        
-        // 목표 텍스트뷰 생성
-        TextView textView = new TextView(this);
-        textView.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-        textView.setText(goalText);
-        textView.setTextColor(textColor);
-        textView.setTextSize(24);
-        textView.setPadding(16, 16, 16, 16);
-        textView.setGravity(Gravity.CENTER);
-        textView.setId(View.generateViewId());
-        goalTextView = textView;
-        
-        // 안내 텍스트뷰 생성
-        TextView hintTextView = new TextView(this);
-        hintTextView.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-        hintTextView.setText("오른쪽으로 스와이프하여 잠금화면 넘기기");
-        hintTextView.setTextColor(textColor);
-        hintTextView.setTextSize(14);
-        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) hintTextView.getLayoutParams();
-        params.topMargin = 32;
-        hintTextView.setLayoutParams(params);
-        
-        // 뷰 추가
-        rootLayout.addView(textView);
-        rootLayout.addView(hintTextView);
-        
-        // 스와이프 이벤트 설정
-        rootLayout.setOnTouchListener(new OnSwipeTouchListener(this) {
-            @Override
-            public void onSwipeRight() {
-                hideLockScreen();
+            String bgColorStr = prefs.getString(KEY_BG_COLOR, "#FF4CAF50");
+            if (bgColorStr != null && !bgColorStr.isEmpty()) {
+                backgroundColor = Color.parseColor(bgColorStr);
             }
-        });
+            
+            String textColorStr = prefs.getString(KEY_TEXT_COLOR, "#FFFFFFFF");
+            if (textColorStr != null && !textColorStr.isEmpty()) {
+                textColor = Color.parseColor(textColorStr);
+            }
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "색상 파싱 오류: " + e.getMessage());
+            backgroundColor = Color.GREEN;
+            textColor = Color.WHITE;
+        }
         
-        return rootLayout;
+        Log.d(TAG, "설정 로드: goalText=" + goalText + ", bgColor=" + backgroundColor + ", textColor=" + textColor);
     }
 
-    private void hideLockScreen() {
-        if (lockScreenView != null) {
-            try {
-                windowManager.removeView(lockScreenView);
-                lockScreenView = null;
-                Log.d(TAG, "잠금화면 숨김");
-            } catch (Exception e) {
-                Log.e(TAG, "잠금화면 숨기기 실패: " + e.getMessage());
+    // LockScreenActivity를 시작하는 메서드
+    private void showLockScreenActivity() {
+        if (!isServiceRunning) {
+            return;
+        }
+        
+        try {
+            // 화면이 꺼져 있으면 켜도록 WakeLock 획득
+            if (!powerManager.isInteractive()) {
+                wakeLock.acquire(10*60*1000L); // 10분 동안 WakeLock 유지 (안전장치)
+            }
+            
+            // 잠금화면 액티비티 시작
+            Intent lockIntent = new Intent(this, LockScreenActivity.class);
+            lockIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                             Intent.FLAG_ACTIVITY_SINGLE_TOP |
+                             Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && keyguardManager.isKeyguardLocked()) {
+                // 키가드가 잠겨있는 경우 처리
+                if (!keyguardManager.isDeviceSecure()) {
+                    // 서비스에서는 직접 키가드를 해제할 수 없음
+                    // LockScreenActivity에서 직접 처리할 것
+                    Log.d(TAG, "보안이 없는 기기입니다. LockScreenActivity에서 키가드를 해제합니다.");
+                }
+            }
+            
+            // 활동 시작
+            startActivity(lockIntent);
+            Log.d(TAG, "잠금화면 액티비티 시작됨");
+            
+            // WakeLock 해제
+            if (wakeLock.isHeld()) {
+                wakeLock.release();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "잠금화면 액티비티 시작 실패: " + e.getMessage());
+            
+            // WakeLock 해제 (예외 발생 시에도)
+            if (wakeLock != null && wakeLock.isHeld()) {
+                wakeLock.release();
             }
         }
     }
@@ -279,31 +250,24 @@ public class LockScreenService extends Service {
         editor.putString(KEY_GOAL_TEXT, goalText);
         editor.apply();
         
-        // 현재 보여지고 있는 화면 업데이트
-        if (goalTextView != null) {
-            goalTextView.setText(goalText);
-        }
-        
         Log.d(TAG, "목표 텍스트 업데이트: " + goalText);
     }
 
-    public void updateColors(int newBackgroundColor, int newTextColor) {
-        backgroundColor = newBackgroundColor;
-        textColor = newTextColor;
-        
-        // 설정 저장
-        SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
-        editor.putInt(KEY_BG_COLOR, backgroundColor);
-        editor.putInt(KEY_TEXT_COLOR, textColor);
-        editor.apply();
-        
-        // 현재 보여지고 있는 화면 업데이트
-        if (goalTextView != null && goalLockLayout != null) {
-            goalTextView.setTextColor(textColor);
-            goalLockLayout.setBackgroundColor(backgroundColor);
+    public void updateColors(String newBackgroundColor, String newTextColor) {
+        try {
+            backgroundColor = Color.parseColor(newBackgroundColor);
+            textColor = Color.parseColor(newTextColor);
+            
+            // 설정 저장
+            SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
+            editor.putString(KEY_BG_COLOR, newBackgroundColor);
+            editor.putString(KEY_TEXT_COLOR, newTextColor);
+            editor.apply();
+            
+            Log.d(TAG, "색상 업데이트됨: bg=" + newBackgroundColor + ", text=" + newTextColor);
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "색상 파싱 오류: " + e.getMessage());
         }
-        
-        Log.d(TAG, "색상 업데이트됨");
     }
 
     @Nullable
@@ -322,9 +286,11 @@ public class LockScreenService extends Service {
                     updateGoalText(newGoalText);
                 }
             } else if ("UPDATE_COLORS".equals(action)) {
-                int newBgColor = intent.getIntExtra("backgroundColor", backgroundColor);
-                int newTextColor = intent.getIntExtra("textColor", textColor);
-                updateColors(newBgColor, newTextColor);
+                String newBgColor = intent.getStringExtra("backgroundColor");
+                String newTextColor = intent.getStringExtra("textColor");
+                if (newBgColor != null && newTextColor != null) {
+                    updateColors(newBgColor, newTextColor);
+                }
             }
         }
         return START_STICKY;
@@ -333,6 +299,9 @@ public class LockScreenService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        
+        // 서비스 비활성화 상태 저장
+        saveServiceState(false);
         
         // 브로드캐스트 리시버 해제
         try {
@@ -343,9 +312,12 @@ public class LockScreenService extends Service {
             Log.e(TAG, "리시버 해제 중 오류: " + e.getMessage());
         }
         
-        // 잠금화면이 표시되어 있다면 제거
-        hideLockScreen();
+        // WakeLock 해제 확인
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
+        }
         
+        isServiceRunning = false;
         Log.d(TAG, "잠금화면 서비스 종료됨");
     }
 } 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:goalock/models/goal.dart';
 import 'package:goalock/screens/archive_screen.dart';
+import 'package:goalock/screens/lock_screen_settings.dart';
 import 'package:goalock/services/storage_service.dart';
 import 'package:goalock/services/wallpaper_service.dart';
 import 'package:goalock/theme/app_theme.dart';
@@ -232,6 +233,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: const Icon(Icons.archive_outlined),
                           color: AppTheme.primaryColor,
                           onPressed: _navigateToArchive,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.lock_outline),
+                          color: AppTheme.primaryColor,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const LockScreenSettings(),
+                              ),
+                            );
+                          },
                         ),
                         IconButton(
                           icon: Icon(
