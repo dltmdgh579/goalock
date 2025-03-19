@@ -3,7 +3,6 @@ import 'package:goalock/models/goal.dart';
 import 'package:goalock/screens/archive_screen.dart';
 import 'package:goalock/screens/lock_screen_settings.dart';
 import 'package:goalock/services/storage_service.dart';
-import 'package:goalock/services/wallpaper_service.dart';
 import 'package:goalock/theme/app_theme.dart';
 import 'package:goalock/widgets/action_button.dart';
 import 'package:goalock/widgets/goal_input_card.dart';
@@ -24,11 +23,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedPeriod = "Always";
   bool _isChecked = false;
   bool _isDarkMode = false;
-  bool _isCustomLockScreenEnabled = false;
+  bool _isLockScreenEnabled = false;
 
   late StorageService _storageService;
-  late WallpaperService _wallpaperService;
-  late CustomLockScreenService _customLockScreenService;
+  late CustomLockScreenService _lockScreenService;
 
   @override
   void initState() {
@@ -40,8 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _storageService = Provider.of<StorageService>(context, listen: false);
-    _wallpaperService = Provider.of<WallpaperService>(context, listen: false);
-    _customLockScreenService = CustomLockScreenService();
+    _lockScreenService = CustomLockScreenService();
     _loadCurrentGoal();
   }
 
@@ -54,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _setWallpaper() async {
+  Future<void> _setLockScreen() async {
     final goalText = _goalController.text;
     if (goalText.isEmpty) {
       _showSnackBar("목표를 입력해주세요");
@@ -64,11 +61,25 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       _showSnackBar("잠금 화면 설정 중...");
 
-      final success = await _wallpaperService.setGoalWallpaper(
+      final hasPermission = await _lockScreenService.requestPermissions();
+      if (!hasPermission) {
+        _showSnackBar("권한이 없어 잠금화면을 설정할 수 없습니다.");
+        return;
+      }
+
+      final backgroundColor = AppTheme.primaryColor;
+      final textColor = Colors.white;
+
+      final success = await _lockScreenService.enableLockScreenService(
         goalText: goalText,
+        backgroundColor: backgroundColor,
+        textColor: textColor,
       );
 
       if (success) {
+        setState(() {
+          _isLockScreenEnabled = true;
+        });
         _showSnackBar("잠금 화면 설정 완료!");
 
         // 목표 저장
@@ -82,64 +93,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _setCustomLockScreen() async {
-    final goalText = _goalController.text;
-    if (goalText.isEmpty) {
-      _showSnackBar("목표를 입력해주세요");
-      return;
-    }
-
+  Future<void> _disableLockScreen() async {
     try {
-      _showSnackBar("커스텀 잠금 화면 설정 중...");
+      _showSnackBar("잠금 화면 비활성화 중...");
 
-      final hasPermission = await _customLockScreenService.requestPermissions();
-      if (!hasPermission) {
-        _showSnackBar("권한이 없어 커스텀 잠금화면을 설정할 수 없습니다.");
-        return;
-      }
-
-      final backgroundColor = AppTheme.primaryColor;
-      final textColor = Colors.white;
-
-      final success = await _customLockScreenService.enableLockScreenService(
-        goalText: goalText,
-        backgroundColor: backgroundColor,
-        textColor: textColor,
-      );
+      final success = await _lockScreenService.disableLockScreenService();
 
       if (success) {
         setState(() {
-          _isCustomLockScreenEnabled = true;
+          _isLockScreenEnabled = false;
         });
-        _showSnackBar("커스텀 잠금 화면 설정 완료!");
-
-        // 목표 저장
-        await _saveGoal();
+        _showSnackBar("잠금 화면이 비활성화되었습니다.");
       } else {
-        _showSnackBar("커스텀 잠금 화면 설정에 실패했습니다. 다시 시도해주세요.");
+        _showSnackBar("잠금 화면 비활성화에 실패했습니다.");
       }
     } catch (e) {
-      debugPrint("커스텀 잠금화면 설정 오류: $e");
-      _showSnackBar("오류 발생: 앱을 재시작하고 다시 시도해주세요");
-    }
-  }
-
-  Future<void> _disableCustomLockScreen() async {
-    try {
-      _showSnackBar("커스텀 잠금 화면 비활성화 중...");
-
-      final success = await _customLockScreenService.disableLockScreenService();
-
-      if (success) {
-        setState(() {
-          _isCustomLockScreenEnabled = false;
-        });
-        _showSnackBar("커스텀 잠금 화면이 비활성화되었습니다.");
-      } else {
-        _showSnackBar("커스텀 잠금 화면 비활성화에 실패했습니다.");
-      }
-    } catch (e) {
-      debugPrint("커스텀 잠금화면 비활성화 오류: $e");
+      debugPrint("잠금화면 비활성화 오류: $e");
       _showSnackBar("오류 발생: 앱을 재시작하고 다시 시도해주세요");
     }
   }
@@ -295,29 +264,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const Spacer(),
 
-                // 잠금화면 설정 버튼들 (기존 방식과 새로운 방식)
+                // 잠금화면 버튼
                 ActionButton(
-                  text: "기본 잠금화면 설정",
-                  onPressed: _setWallpaper,
-                  isDarkMode: isDark,
-                ),
-                const SizedBox(height: 12),
-
-                // 커스텀 잠금화면 버튼 추가
-                ActionButton(
-                  text:
-                      _isCustomLockScreenEnabled
-                          ? "커스텀 잠금화면 비활성화"
-                          : "커스텀 잠금화면 활성화",
+                  text: _isLockScreenEnabled ? "잠금화면 비활성화" : "잠금화면 활성화",
                   onPressed:
-                      _isCustomLockScreenEnabled
-                          ? _disableCustomLockScreen
-                          : _setCustomLockScreen,
+                      _isLockScreenEnabled
+                          ? _disableLockScreen
+                          : _setLockScreen,
                   isDarkMode: isDark,
                   backgroundColor:
-                      _isCustomLockScreenEnabled
-                          ? Colors.red
-                          : AppTheme.primaryColor,
+                      _isLockScreenEnabled ? Colors.red : AppTheme.primaryColor,
                 ),
                 const SizedBox(height: 20),
 
