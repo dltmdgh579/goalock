@@ -146,9 +146,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(10),
+      ),
+    );
   }
 
   void _resetGoal() {
@@ -174,126 +179,308 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: isDark ? AppTheme.darkGradient : AppTheme.lightGradient,
           ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 앱 헤더
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "GoalLock",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.archive_outlined),
-                          color: AppTheme.primaryColor,
-                          onPressed: _navigateToArchive,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.lock_outline),
-                          color: AppTheme.primaryColor,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => const LockScreenSettings(),
-                              ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            isDark ? Icons.wb_sunny : Icons.nights_stay,
-                            color: AppTheme.primaryColor,
-                          ),
-                          onPressed:
-                              () => setState(() => _isDarkMode = !_isDarkMode),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                _buildAppHeader(isDark),
+                const SizedBox(height: 32),
 
                 // 목표 입력 필드
-                GoalInputCard(controller: _goalController, isDarkMode: isDark),
-                const SizedBox(height: 20),
-
-                // 표시 주기 선택
-                PeriodSelector(
-                  selectedPeriod: _selectedPeriod,
-                  onPeriodSelected:
-                      (period) => setState(() => _selectedPeriod = period),
-                  isDarkMode: isDark,
-                ),
-                const SizedBox(height: 20),
-
-                // 목표 달성 체크박스
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _isChecked,
-                      onChanged: (bool? value) {
-                        setState(() => _isChecked = value ?? false);
-                        if (value ?? false) {
-                          _completeGoal();
-                        }
-                      },
-                      shape: const CircleBorder(),
-                      activeColor: AppTheme.primaryColor,
-                      checkColor: isDark ? Colors.black : Colors.white,
-                    ),
-                    const Text("목표 달성", style: TextStyle(fontSize: 16)),
-                  ],
-                ),
+                _buildGoalInputSection(isDark),
+                const SizedBox(height: 32),
 
                 const Spacer(),
 
-                // 잠금화면 버튼
-                ActionButton(
-                  text: _isLockScreenEnabled ? "잠금화면 비활성화" : "잠금화면 활성화",
-                  onPressed:
-                      _isLockScreenEnabled
-                          ? _disableLockScreen
-                          : _setLockScreen,
-                  isDarkMode: isDark,
-                  backgroundColor:
-                      _isLockScreenEnabled ? Colors.red : AppTheme.primaryColor,
-                ),
-                const SizedBox(height: 20),
+                // 액션 버튼 섹션
+                _buildActionButtons(isDark),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-                // 새 목표 추가 버튼
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: FloatingActionButton(
-                    onPressed: _resetGoal,
-                    backgroundColor: AppTheme.primaryColor,
-                    child: Icon(
-                      Icons.add,
-                      color: isDark ? Colors.black : Colors.white,
+  Widget _buildAppHeader(bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.flag_rounded,
+                color: AppTheme.primaryColor,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              "GoalLock",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            _buildIconButton(
+              icon: Icons.archive_outlined,
+              onPressed: _navigateToArchive,
+              isDark: isDark,
+            ),
+            _buildIconButton(
+              icon: Icons.lock_outline,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LockScreenSettings(),
+                  ),
+                );
+              },
+              isDark: isDark,
+            ),
+            _buildIconButton(
+              icon:
+                  isDark ? Icons.wb_sunny_outlined : Icons.nights_stay_outlined,
+              onPressed: () => setState(() => _isDarkMode = !_isDarkMode),
+              isDark: isDark,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isDark,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      decoration: BoxDecoration(
+        color:
+            isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        icon: Icon(icon),
+        color: AppTheme.primaryColor,
+        onPressed: onPressed,
+        padding: const EdgeInsets.all(8),
+        constraints: const BoxConstraints(),
+        visualDensity: VisualDensity.compact,
+      ),
+    );
+  }
+
+  Widget _buildGoalInputSection(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "오늘의 목표",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white70 : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // 목표 입력 필드
+        GoalInputCard(controller: _goalController, isDarkMode: isDark),
+        const SizedBox(height: 24),
+
+        // 표시 주기 선택
+        PeriodSelector(
+          selectedPeriod: _selectedPeriod,
+          onPeriodSelected:
+              (period) => setState(() => _selectedPeriod = period),
+          isDarkMode: isDark,
+        ),
+        const SizedBox(height: 24),
+
+        // 목표 달성 체크박스
+        InkWell(
+          onTap: () {
+            setState(() => _isChecked = !_isChecked);
+            if (_isChecked) {
+              _completeGoal();
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color:
+                  _isChecked
+                      ? AppTheme.primaryColor.withOpacity(0.2)
+                      : isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color:
+                        _isChecked ? AppTheme.primaryColor : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color:
+                          _isChecked
+                              ? AppTheme.primaryColor
+                              : isDark
+                              ? Colors.white70
+                              : Colors.black54,
+                      width: 2,
                     ),
+                  ),
+                  child:
+                      _isChecked
+                          ? const Icon(
+                            Icons.check,
+                            size: 16,
+                            color: Colors.white,
+                          )
+                          : null,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  "목표 달성",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color:
+                        _isChecked
+                            ? AppTheme.primaryColor
+                            : isDark
+                            ? Colors.white
+                            : Colors.black87,
                   ),
                 ),
               ],
             ),
           ),
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(bool isDark) {
+    return Column(
+      children: [
+        // 잠금화면 버튼
+        Container(
+          width: double.infinity,
+          height: 56,
+          margin: const EdgeInsets.only(bottom: 16),
+          child: ElevatedButton(
+            onPressed:
+                _isLockScreenEnabled ? _disableLockScreen : _setLockScreen,
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  _isLockScreenEnabled
+                      ? Colors.redAccent
+                      : AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _isLockScreenEnabled
+                      ? Icons.lock_open_outlined
+                      : Icons.lock_outline,
+                  size: 20,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _isLockScreenEnabled ? "잠금화면 비활성화" : "잠금화면 활성화",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // 새 목표 추가 버튼
+        Container(
+          width: double.infinity,
+          height: 56,
+          margin: const EdgeInsets.only(bottom: 16),
+          child: ElevatedButton(
+            onPressed: _resetGoal,
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.05),
+              foregroundColor: isDark ? Colors.white : Colors.black87,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_circle_outline,
+                  size: 20,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "새 목표 추가하기",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
