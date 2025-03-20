@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 780">
+  <defs>
+    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff9a9e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fad0c4;stop-opacity:1" />
+    </linearGradient>
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+      <feOffset dx="0" dy="2" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.2" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 배경 -->
+  <rect width="360" height="780" fill="#f8f9fe" />
+  
+  <!-- 상태 바 -->
+  <rect x="0" y="0" width="360" height="30" fill="#f8f9fe" />
+  <text x="25" y="20" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#525f7f">10:30</text>
+  <text x="320" y="20" font-family="'Segoe UI', Arial, sans-serif" font-size="12" text-anchor="end" fill="#525f7f">80%</text>
+  
+  <!-- 헤더 -->
+  <rect x="0" y="30" width="360" height="120" fill="url(#headerGradient)" />
+  <text x="20" y="75" font-family="'Segoe UI', Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">몸무게 65kg 만들기</text>
+  <text x="20" y="105" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="400" fill="#ffffff">진행 중 (현재 -3kg)</text>
+  
+  <!-- 뒤로가기 버튼 -->
+  <path d="M20,50 l10,-10 v5 h5 v10 h-5 v5 Z" fill="#ffffff" />
+  
+  <!-- 메뉴 버튼 -->
+  <circle cx="330" cy="50" r="15" fill="rgba(255,255,255,0.2)" />
+  <circle cx="320" cy="50" r="2" fill="#ffffff" />
+  <circle cx="330" cy="50" r="2" fill="#ffffff" />
+  <circle cx="340" cy="50" r="2" fill="#ffffff" />
+
+  <!-- 스크롤 영역 - 네비게이션 바가 없으므로 더 길게 확장 -->
+  <rect x="0" y="150" width="360" height="630" fill="#f8f9fe" />
+  
+  <!-- 목표 설명 카드 -->
+  <rect x="20" y="170" width="320" height="120" rx="15" ry="15" fill="#ffffff" filter="url(#dropShadow)" />
+  <text x="40" y="200" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="600" fill="#525f7f">목표 설명</text>
+  <text x="40" y="230" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#8898aa">건강한 생활습관으로 체중 감량을 이루고</text>
+  <text x="40" y="255" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#8898aa">체력과 자신감을 높이기 위한 목표입니다.</text>
+  
+  <!-- 수정 아이콘 -->
+  <circle cx="310" cy="200" r="12" fill="#f1f3fa" />
+  <path d="M304,200 l4,4 l8,-8" stroke="#5e72e4" stroke-width="1.5" fill="none" />
+  
+  <!-- 목표 시작일 카드 -->
+  <rect x="20" y="310" width="320" height="80" rx="15" ry="15" fill="#ffffff" filter="url(#dropShadow)" />
+  <text x="40" y="340" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="600" fill="#525f7f">시작 정보</text>
+  <text x="40" y="370" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#8898aa">시작일: 2025년 1월 10일 (시작 체중: 72kg)</text>
+  
+  <!-- 수정 아이콘 -->
+  <circle cx="310" cy="340" r="12" fill="#f1f3fa" />
+  <path d="M304,340 l4,4 l8,-8" stroke="#5e72e4" stroke-width="1.5" fill="none" />
+  
+  <!-- 동기부여 카드 -->
+  <rect x="20" y="410" width="320" height="90" rx="15" ry="15" fill="#ffffff" filter="url(#dropShadow)" />
+  <text x="40" y="440" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="600" fill="#525f7f">동기부여 메시지</text>
+  <text x="40" y="470" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-style="italic" fill="#8898aa">"오늘의 선택이 내일의 건강을 만듭니다."</text>
+  
+  <!-- 수정 아이콘 -->
+  <circle cx="310" cy="440" r="12" fill="#f1f3fa" />
+  <path d="M304,440 l4,4 l8,-8" stroke="#5e72e4" stroke-width="1.5" fill="none" />
+  
+  <!-- 알림 설정 카드 -->
+  <rect x="20" y="520" width="320" height="90" rx="15" ry="15" fill="#ffffff" filter="url(#dropShadow)" />
+  <text x="40" y="550" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="600" fill="#525f7f">알림 설정</text>
+  <text x="40" y="580" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#8898aa">매일 오전 8:00</text>
+  
+  <!-- 토글 스위치 -->
+  <rect x="255" y="560" width="50" height="28" rx="14" ry="14" fill="#5e72e4" />
+  <circle cx="287" cy="574" r="12" fill="#ffffff" />
+  
+  <!-- 삭제 버튼 -->
+  <rect x="20" y="650" width="320" height="50" rx="25" ry="25" fill="#ffffff" stroke="#ff4d4d" stroke-width="2" />
+  <text x="180" y="680" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#ff4d4d">삭제하기</text>
+</svg>

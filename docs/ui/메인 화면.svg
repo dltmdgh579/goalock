@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 780">
+  <defs>
+    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#5e72e4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#825ee4;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff9a9e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fad0c4;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+      <feOffset dx="0" dy="2" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.2" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="floatingShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5" />
+      <feOffset dx="0" dy="4" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 배경 -->
+  <rect width="360" height="780" fill="#f8f9fe" />
+  
+  <!-- 상태 바 -->
+  <rect x="0" y="0" width="360" height="30" fill="#f8f9fe" />
+  <text x="25" y="20" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#525f7f">10:30</text>
+  <text x="320" y="20" font-family="'Segoe UI', Arial, sans-serif" font-size="12" text-anchor="end" fill="#525f7f">80%</text>
+  
+  <!-- 헤더 -->
+  <rect x="0" y="30" width="360" height="100" fill="url(#headerGradient)" />
+  <text x="25" y="75" font-family="'Segoe UI', Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">내 목표</text>
+  <text x="25" y="105" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="400" fill="rgba(255,255,255,0.8)">꿈을 현실로 만드는 여정</text>
+  
+  <!-- 설정 아이콘 (헤더에 추가) -->
+  <circle cx="330" cy="60" r="18" fill="rgba(255,255,255,0.2)" />
+  <circle cx="330" cy="60" r="8" stroke="#ffffff" stroke-width="1.5" fill="none" />
+  <path d="M330,52 v2 M330,66 v2 M322,60 h2 M338,60 h2" stroke="#ffffff" stroke-width="1.5" />
+  
+  <!-- 스크롤 영역 - 네비게이션 바가 없으므로 더 길게 확장 -->
+  <rect x="0" y="130" width="360" height="650" fill="#f8f9fe" />
+  
+  <!-- 현재 활성 목표 카드 -->
+  <rect x="20" y="150" width="320" height="140" rx="20" ry="20" fill="url(#cardGradient1)" filter="url(#dropShadow)" />
+  <text x="40" y="185" font-family="'Segoe UI', Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">정보처리기사 자격증 따기</text>
+  <text x="40" y="215" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#ffffff">목표 기한: 2025년 6월 30일</text>
+  <text x="40" y="240" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#ffffff">D-102</text>
+  
+  <!-- 동기부여 메시지 -->
+  <text x="40" y="270" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-style="italic" fill="rgba(255,255,255,0.9)">"오늘 한 걸음이 내일의 큰 성과를 만듭니다."</text>
+  
+  <!-- 목표 2 -->
+  <rect x="20" y="310" width="320" height="100" rx="20" ry="20" fill="url(#cardGradient2)" filter="url(#dropShadow)" />
+  <text x="40" y="345" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="700" fill="#ffffff">몸무게 65kg 만들기</text>
+  <text x="40" y="370" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#ffffff">현재 진행 중 (-3kg)</text>
+  
+  <!-- 목표 3 -->
+  <rect x="20" y="430" width="320" height="100" rx="20" ry="20" fill="url(#cardGradient3)" filter="url(#dropShadow)" />
+  <text x="40" y="465" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="700" fill="#ffffff">러닝 10km 달성하기</text>
+  <text x="40" y="490" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#ffffff">목표 기한: 2025년 4월 15일</text>
+  
+  <!-- 플로팅 추가 버튼 -->
+  <circle cx="300" cy="700" r="30" fill="url(#headerGradient)" filter="url(#floatingShadow)" />
+  <text x="300" y="708" font-family="'Segoe UI', Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle" fill="#ffffff">+</text>
+</svg>

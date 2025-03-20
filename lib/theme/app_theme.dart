@@ -3,19 +3,29 @@ import 'package:flutter/material.dart';
 /// 앱 전체에서 사용되는 테마 설정을 관리하는 클래스
 class AppTheme {
   // 앱에서 사용되는 주요 색상
-  static const Color primaryColor = Color(0xFF4CAF50); // 네온 민트
-  static const Color secondaryColor = Color(0xFF2E7D32);
-  static const Color accentColor = Color(0xFF81C784);
+  static const Color primaryColor = Color(0xFF5e72e4); // 파란색 기본
+  static const Color secondaryColor = Color(0xFF825ee4); // 보라색 보조
+  static const Color accentColor = Color(0xFF4facfe); // 하늘색 액센트
+
+  // 추가 그라데이션 컬러들
+  static const Color cardGradient1Start = Color(0xFF4facfe); // 카드 그라데이션 1 시작
+  static const Color cardGradient1End = Color(0xFF00f2fe); // 카드 그라데이션 1 끝
+
+  static const Color cardGradient2Start = Color(0xFFff9a9e); // 카드 그라데이션 2 시작
+  static const Color cardGradient2End = Color(0xFFfad0c4); // 카드 그라데이션 2 끝
+
+  static const Color cardGradient3Start = Color(0xFF667eea); // 카드 그라데이션 3 시작
+  static const Color cardGradient3End = Color(0xFF764ba2); // 카드 그라데이션 3 끝
 
   // 라이트 테마 설정
   static final ThemeData lightTheme = ThemeData.light().copyWith(
-    scaffoldBackgroundColor: Colors.transparent,
+    scaffoldBackgroundColor: const Color(0xFFf8f9fe),
     primaryColor: primaryColor,
     colorScheme: ColorScheme.light(
       primary: primaryColor,
       secondary: secondaryColor,
     ),
-    textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.black87)),
+    textTheme: const TextTheme(bodyMedium: TextStyle(color: Color(0xFF525f7f))),
     cardColor: Colors.white,
     buttonTheme: const ButtonThemeData(buttonColor: primaryColor),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -85,8 +95,25 @@ class AppTheme {
   );
 
   // 그라데이션 배경 (라이트 모드)
-  static const List<Color> lightGradient = [Color(0xFFE0E0E0), Colors.white];
+  static const List<Color> lightGradient = [Color(0xFFf8f9fe), Colors.white];
 
   // 그라데이션 배경 (다크 모드)
   static const List<Color> darkGradient = [Color(0xFF212121), Colors.black];
+
+  // 헤더 그라데이션
+  static const List<Color> headerGradient = [primaryColor, secondaryColor];
+
+  // 카드 그라데이션들
+  static const List<Color> card1Gradient = [
+    cardGradient1Start,
+    cardGradient1End,
+  ];
+  static const List<Color> card2Gradient = [
+    cardGradient2Start,
+    cardGradient2End,
+  ];
+  static const List<Color> card3Gradient = [
+    cardGradient3Start,
+    cardGradient3End,
+  ];
 }

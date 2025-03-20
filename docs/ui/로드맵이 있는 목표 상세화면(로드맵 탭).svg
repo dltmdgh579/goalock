@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 780">
+  <defs>
+    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#5e72e4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2dce89;stop-opacity:1" />
+    </linearGradient>
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+      <feOffset dx="0" dy="2" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.2" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 배경 -->
+  <rect width="360" height="780" fill="#f8f9fe" />
+  
+  <!-- 상태 바 -->
+  <rect x="0" y="0" width="360" height="30" fill="#f8f9fe" />
+  <text x="25" y="20" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#525f7f">10:30</text>
+  <text x="320" y="20" font-family="'Segoe UI', Arial, sans-serif" font-size="12" text-anchor="end" fill="#525f7f">80%</text>
+  
+  <!-- 헤더 -->
+  <rect x="0" y="30" width="360" height="120" fill="url(#headerGradient)" />
+  <text x="20" y="75" font-family="'Segoe UI', Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">정보처리기사 자격증 따기</text>
+  <text x="20" y="105" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="400" fill="#ffffff">목표 달성일: 2025년 6월 30일 (D-102)</text>
+  
+  <!-- 뒤로가기 버튼 -->
+  <path d="M20,50 l10,-10 v5 h5 v10 h-5 v5 Z" fill="#ffffff" />
+  
+  <!-- 메뉴 버튼 -->
+  <circle cx="330" cy="50" r="15" fill="rgba(255,255,255,0.2)" />
+  <circle cx="320" cy="50" r="2" fill="#ffffff" />
+  <circle cx="330" cy="50" r="2" fill="#ffffff" />
+  <circle cx="340" cy="50" r="2" fill="#ffffff" />
+
+  <!-- 탭 메뉴 -->
+  <rect x="0" y="150" width="360" height="50" fill="#ffffff" />
+  <rect x="0" y="150" width="180" height="50" fill="#ffffff" />
+  <text x="90" y="180" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#8898aa">목표</text>
+  
+  <rect x="180" y="150" width="180" height="50" fill="#ffffff" />
+  <text x="270" y="180" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#5e72e4">로드맵</text>
+  <line x1="250" y1="200" x2="290" y2="200" stroke="#5e72e4" stroke-width="3" stroke-linecap="round" />
+  
+  <!-- 스크롤 영역 - 네비게이션 바가 없으므로 더 길게 확장 -->
+  <rect x="0" y="200" width="360" height="580" fill="#f8f9fe" />
+  
+  <!-- 로드맵 진행률 -->
+  <rect x="20" y="220" width="320" height="60" rx="15" ry="15" fill="#ffffff" filter="url(#dropShadow)" />
+  <text x="40" y="250" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" fill="#525f7f">로드맵 진행률: 3/5단계</text>
+  <text x="290" y="250" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" text-anchor="end" fill="#5e72e4">60%</text>
+  <rect x="40" y="260" width="260" height="8" rx="4" ry="4" fill="#f1f3fa" />
+  <rect x="40" y="260" width="156" height="8" rx="4" ry="4" fill="url(#progressGradient)" />
+  
+  <!-- 로드맵 설명 -->
+  <rect x="20" y="295" width="320" height="370" rx="15" ry="15" fill="#ffffff" filter="url(#dropShadow)" />
+  
+  <!-- 로드맵 타임라인 -->
+  <line x1="75" y1="325" x2="75" y2="655" stroke="#e9ecef" stroke-width="2" />
+  
+  <!-- 완료된 단계 1 -->
+  <circle cx="75" cy="345" r="18" fill="#2dce89" />
+  <text x="75" y="350" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">1</text>
+  <rect x="105" y="325" width="215" height="70" rx="10" ry="10" fill="#f8fafb" />
+  <text x="125" y="350" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" fill="#525f7f">기본 이론 공부</text>
+  <text x="125" y="375" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#8898aa">2025년 1월 15일 완료</text>
+  <circle cx="302" cy="350" r="10" fill="#2dce89" />
+  <text x="302" y="355" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">✓</text>
+  
+  <!-- 완료된 단계 2 -->
+  <circle cx="75" cy="435" r="18" fill="#2dce89" />
+  <text x="75" y="440" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">2</text>
+  <rect x="105" y="415" width="215" height="70" rx="10" ry="10" fill="#f8fafb" />
+  <text x="125" y="440" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" fill="#525f7f">기출문제 풀이</text>
+  <text x="125" y="465" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#8898aa">2025년 2월 28일 완료</text>
+  <circle cx="302" cy="440" r="10" fill="#2dce89" />
+  <text x="302" y="445" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">✓</text>
+  
+  <!-- 진행 중인 단계 3 -->
+  <circle cx="75" cy="525" r="18" fill="#5e72e4" />
+  <text x="75" y="530" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">3</text>
+  <rect x="105" y="505" width="215" height="70" rx="10" ry="10" fill="#f1f3ff" />
+  <text x="125" y="530" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" fill="#525f7f">실전 모의고사</text>
+  <text x="125" y="555" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#5e72e4">진행 중...</text>
+  <circle cx="302" cy="530" r="10" fill="#f1f3ff" stroke="#5e72e4" stroke-width="1.5" />
+  
+  <!-- 예정된 단계 4 -->
+  <circle cx="75" cy="615" r="18" fill="#dee2e6" />
+  <text x="75" y="620" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">4</text>
+  <rect x="105" y="595" width="215" height="70" rx="10" ry="10" fill="#f8fafb" />
+  <text x="125" y="620" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" fill="#8898aa">최종 시험 응시</text>
+  <text x="125" y="645" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#8898aa">예정됨</text>
+  <circle cx="302" cy="620" r="10" fill="#f8fafb" stroke="#dee2e6" stroke-width="1.5" />
+  
+  <!-- 로드맵 편집 버튼 -->
+  <rect x="20" y="690" width="320" height="50" rx="25" ry="25" fill="#ffffff" stroke="#5e72e4" stroke-width="2" />
+  <text x="180" y="720" font-family="'Segoe UI', Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#5e72e4">로드맵 편집하기</text>
+</svg>
