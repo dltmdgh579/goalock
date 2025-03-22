@@ -8,6 +8,7 @@ import 'package:goalock/widgets/goal_card.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:goalock/services/custom_lock_screen_service.dart';
+import 'package:goalock/screens/goal_setup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -165,10 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.transparent,
           child: InkWell(
             customBorder: const CircleBorder(),
-            onTap: () {
-              // 목표 추가 화면으로 이동
-              _showSnackBar("새 목표 추가");
-            },
+            onTap: () => _navigateToGoalSetup(),
             child: const Center(
               child: Text(
                 "+",
@@ -183,6 +181,19 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _navigateToGoalSetup() async {
+    // 목표 설정 화면으로 이동
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const GoalSetupScreen()),
+    );
+
+    // 새 목표가 추가되었으면 목록 리로드
+    if (result == true) {
+      _loadGoals();
+    }
   }
 
   Widget _buildHeader() {

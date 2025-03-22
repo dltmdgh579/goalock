@@ -26,7 +26,17 @@ class StorageService {
     required String title,
     String? description,
     required String displayPeriod,
+    Goal? newGoal,
   }) async {
+    // 새 목표 객체가 직접 전달된 경우
+    if (newGoal != null) {
+      final goals = await getAllGoals();
+      goals.add(newGoal);
+      await _saveGoals(goals);
+      return newGoal;
+    }
+
+    // 기존 방식으로 목표 생성
     final goal = Goal(
       id: const Uuid().v4(),
       title: title,

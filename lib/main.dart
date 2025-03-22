@@ -5,6 +5,7 @@ import 'package:goalock/services/storage_service.dart';
 import 'package:goalock/services/wallpaper_service.dart';
 import 'package:goalock/theme/app_theme.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,13 @@ class GoalLockApp extends StatelessWidget {
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
         home: const HomeScreen(),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ko', 'KR'), Locale('en', 'US')],
+        locale: const Locale('ko', 'KR'),
       ),
     );
   }
