@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:goalock/models/goal.dart';
 import 'package:goalock/screens/archive_screen.dart';
+import 'package:goalock/screens/goal_detail_screen.dart';
 import 'package:goalock/screens/lock_screen_settings.dart';
 import 'package:goalock/services/storage_service.dart';
 import 'package:goalock/theme/app_theme.dart';
@@ -224,6 +225,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Row(
                   children: [
+                    // 아카이브 버튼 (완료된 목표 보기)
+                    _buildHeaderIconButton(
+                      icon: Icons.bookmark,
+                      onTap: _navigateToArchive,
+                    ),
+                    const SizedBox(width: 10),
                     // 설정 버튼
                     _buildHeaderIconButton(
                       icon: Icons.settings,
@@ -275,13 +282,23 @@ class _HomeScreenState extends State<HomeScreen> {
         return GoalCard(
           goal: goal,
           cardIndex: index,
-          onTap: () {
-            // 목표 상세 화면으로 이동
-            _showSnackBar("목표 상세 화면으로 이동");
-          },
+          onTap: () => _navigateToGoalDetail(goal),
         );
       },
     );
+  }
+
+  // 목표 상세 화면으로 이동
+  Future<void> _navigateToGoalDetail(Goal goal) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => GoalDetailScreen(goal: goal)),
+    );
+
+    // 목표 업데이트 또는 삭제된 경우 목록 리로드
+    if (result == true) {
+      _loadGoals();
+    }
   }
 
   Widget _buildEmptyState() {
