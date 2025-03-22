@@ -31,7 +31,7 @@ class StorageService {
     // 새 목표 객체가 직접 전달된 경우
     if (newGoal != null) {
       final goals = await getAllGoals();
-      goals.add(newGoal);
+      goals.insert(0, newGoal);
       await _saveGoals(goals);
       return newGoal;
     }
@@ -46,7 +46,7 @@ class StorageService {
     );
 
     final goals = await getAllGoals();
-    goals.add(goal);
+    goals.insert(0, goal);
     await _saveGoals(goals);
 
     return goal;
